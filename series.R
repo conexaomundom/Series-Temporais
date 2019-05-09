@@ -10,8 +10,21 @@ install.packages("gridExtra")
 install.packages("docstring")
 install.packages("readr")
 install.packages("here")
+install.packages("corrplot")
+install.packages("TSA")
+install.packages("dygraphs")
 
-
+library(assertthat)
+library(dygraphs)
+library(xts)
+library(TTR)
+library(tibble)
+library(TSA)
+library(gridExtra)
+library(corrplot)
+library(data.table)
+library(tidyr)
+library(dplyr)
 library(swirl)
 library(ggplot2)
 library(forecast)
@@ -28,22 +41,14 @@ library(here)
 
 #  sarima...
 # caso sazonal pra prediçaõ 
-
-plot(a4_OZONIO$Ozonio, type = "l")
-acf(a4_OZONIO$Ozonio)
-diff(a4_OZONIO$Ozonio, 3)
-par(mfrow = c(2,2))
-plot(a4_OZONIO$Ozonio, type = "l")
-plot(diff(a4_OZONIO$Ozonio, 1), type = "l")
-plot(diff(a4_OZONIO$Ozonio, 2), type = "l")
-plot(diff(a4_OZONIO$Ozonio, 3), type = "l")
-acf(dif1_OZONIO)
-acf(diff(a4_OZONIO$Ozonio, 1))
-acf(diff(a4_OZONIO$Ozonio, 2))
-acf(diff(a4_OZONIO$Ozonio, 3))
-
 #### Banco muito interessante
 
+summary(MCD_2006)
+str(MCD_2006)
+
+# No lugar dos valores faltantes serão postos 0.
+MCD_2006[is.na(MCD_2006)] <- 0
+MCD_2006$Date <- as.Date(MCD_2006$Date, format = "%Y-%m-%d")
 summary(MCD_2006)
 str(MCD_2006)
 
@@ -100,120 +105,423 @@ acf(na.omit(diff(MCD_2006$Close, 1)))
 acf(na.omit(diff(MCD_2006$Close, 2)))
 acf(na.omit(diff(MCD_2006$Close, 3)))
 
-# Criando a série
-Open <- ts(na.omit(diff(MCD_2006$Open, 1)),frequency = 20, start = c(2006,12))
-High <- ts(na.omit(diff(MCD_2006$High, 1)),frequency = 20, start = c(2006,12))
-Low <- ts(na.omit(diff(MCD_2006$Low, 1)),frequency = 20, start = c(2006,12))
-Close <- ts(na.omit(diff(MCD_2006$Close, 1)),frequency = 20, start = c(2006,12))
+options(repr.plot.width=12, repr.plot.height=12) 
+p1 = ggplot(MCD_2006, aes(Open)) + geom_histogram(bins = 50, aes(y = ..density..), col = "black", fill = "black", alpha = 0.3) + geom_density()# + xlim(c(0, 1000))
+p2 = ggplot(MCD_2006, aes(High)) + geom_histogram(bins = 50, aes(y = ..density..), col = "black", fill = "black", alpha = 0.3) + geom_density()# + xlim(c(0, 1000))
+p3 = ggplot(MCD_2006, aes(Low)) + geom_histogram(bins = 50, aes(y = ..density..), col =  "black", fill = "black", alpha = 0.3) + geom_density()# + xlim(c(0, 1000))
+p4 = ggplot(MCD_2006, aes(Close)) + geom_histogram(bins = 50, aes(y = ..density..), col =  "black", fill = "black", alpha = 0.3) + geom_density()# + xlim(c(0, 1000))
+grid.arrange(p1,p2,p3,p4, nrow=2,ncol=2)
 
-## Stationarity
-print(ticker)
-adf.test(Open)
-adf.test(High)
-adf.test(Low)
-adf.test(Close)
+# Create and plot Time Series - Open
+  xts = xts(MCD_2006$Open, order.by=MCD_2006$Date)
+  attr(xts, 'frequency') <- length(xts)/12
+  ts = as.ts(xts, start = c(2006))
+  
+# Estacionario?
+  adf.test(xts)
 
-# sim nao rejeito a hipotese de estacionaridade.
-
-
+dygraph(xts, xlab = "Time", ylab = "High valor", main = "Séries Temporais") %>%
+  # dySeries(labels.default()) %>%
+  # dyOptions(colors = c("red")) %>%
+  dyRangeSelector()
 
 ## Decomposing Time Series
-tscomponents <- decompose(ts)
-plot(tscomponents, col = "red")
+tscomponents_add <- decompose(ts, type = "additive")
+tscomponents_mul <- decompose(ts, type = "multiplicative")
+plot(tscomponents_add, col = "red")
+plot(tscomponents_mul, col = "blue")
 
-## Differencing a Time Series
 xtsdiff1 <- diff(xts, differences=1)
 tsdiff1 <- diff(ts, differences=1)
 plot.xts(xtsdiff1, col = "blue")
+tseries::adf.test(tsdiff1, alternative = "stationary", k = 0)
 findfrequency(xts)          # find dominant frequency of original time series
 findfrequency(xtsdiff1)     # find dominant frequency of differenced time series
 
+
 ## Selecting a Candidate ARIMA Model
-print(ticker)
-print("Selecting a candidate ARIMA Model")
+
 Acf(xtsdiff1, lag.max=60)             # plot a correlogram
 Acf(xtsdiff1, lag.max=60, plot=FALSE) # get the autocorrelation values
 
 Pacf(xtsdiff1, lag.max=60)             # plot a partial correlogram
 Pacf(xtsdiff1, lag.max=60, plot=FALSE) # get the partial autocorrelation values
 
-## Fitting an ARIMA Model
-tsarima <- auto.arima(head(xts, -30), max.p = 3, max.q = 3, max.d = 3)
-
-# excluding last 120 time series as test data
-print(tsarima)
-autoplot(tsarima)
-print(ticker)
-
-## Forecasting using an ARIMA Model
-print(ticker)
-tsforecasts <- forecast(tsarima, h = 30) # forecast the next 120 time series
-acc <- accuracy(tsforecasts, head(tail(xts, 30), 7))
-print(acc)
-autoplot(tsforecasts)
-
-print(ticker)
-
-ggplot(data.frame(residuals = tsforecasts$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
-checkresiduals(tsforecasts)
-
-nstall.packages("aTSA")
+tsarima240 <- auto.arima(head(xts, -240), max.p = 3, max.q = 3, max.d = 3) # excluding last 240 time series as test data
+print(tsarima240)
+autoplot(tsarima240)
+tsarima120 <- auto.arima(head(xts, -120), max.p = 3, max.q = 3, max.d = 3) #120
+print(tsarima120)
+autoplot(tsarima120)
+tsarima60 <- auto.arima(head(xts, -60), max.p = 3, max.q = 3, max.d = 3) #60
+print(tsarima60)
+autoplot(tsarima60)
+tsarima30 <- auto.arima(head(xts, -30), max.p = 3, max.q = 3, max.d = 3) #30
+print(tsarima30)
+autoplot(tsarima30)
+tsarima7 <- auto.arima(head(xts, -7), max.p = 3, max.q = 3, max.d = 3)   #7
+print(tsarima7)
+autoplot(tsarima7)
 
 
+tsforecasts240 <- forecast::forecast(tsarima240, h = 240) # forecast the next 240 time series
+tsforecasts120 <- forecast::forecast(tsarima120, h = 120) # forecast the next 120 time series
+tsforecasts60 <- forecast::forecast(tsarima60, h = 60) # forecast the next 60 time series
+tsforecasts30 <- forecast::forecast(tsarima30, h = 30) # forecast the next 30 time series
+tsforecasts7 <- forecast::forecast(tsarima7, h = 7) # forecast the next 7 time series
+autoplot(tsforecasts240)
+accuracy(tsforecasts240, head(tail(xts, 240), 240))
+accuracy(tsforecasts240, head(tail(xts, 240), 120))
+accuracy(tsforecasts240, head(tail(xts, 240), 60))
+accuracy(tsforecasts240, head(tail(xts, 240), 30))
+accuracy(tsforecasts240, head(tail(xts, 240), 7))
+autoplot(tsforecasts120)
+accuracy(tsforecasts120, head(tail(xts, 120), 120))
+accuracy(tsforecasts120, head(tail(xts, 120), 60))
+accuracy(tsforecasts120, head(tail(xts, 120), 30))
+accuracy(tsforecasts120, head(tail(xts, 120), 7))
+autoplot(tsforecasts60)
+accuracy(tsforecasts60, head(tail(xts, 60), 60))
+accuracy(tsforecasts60, head(tail(xts, 60), 30))
+accuracy(tsforecasts60, head(tail(xts, 60), 7))
+autoplot(tsforecasts30)
+accuracy(tsforecasts30, head(tail(xts, 30), 30))
+accuracy(tsforecasts30, head(tail(xts, 30), 7))
+autoplot(tsforecasts7)
+accuracy(tsforecasts7, head(tail(xts, 7), 7))
 
-#***************************************************************************#
-#*************** Criando series ***************#
-#***************************************************************************#
-banco <- read_csv("C:/Users/PIBIC_2/Desktop/a1_temperatura.csv")
-serieC <- ts(banco[,2],frequency = 12, start = c(1976,1))
-serieU <- ts(banco[,3],frequency = 12, start = c(1976,1))
+# plot.ts(tsforecasts$residuals)            # make time plot of forecast errors
+print('tsforecasts240')
+ggplot(data.frame(residuals = tsforecasts240$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts240)
+print('tsforecasts120')
+ggplot(data.frame(residuals = tsforecasts120$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts120)
+print('tsforecasts60')
+ggplot(data.frame(residuals = tsforecasts60$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts60)
+print('tsforecasts30')
+ggplot(data.frame(residuals = tsforecasts30$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts30)
+print('tsforecasts7')
+ggplot(data.frame(residuals = tsforecasts7$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts7)
+# 
+# ggplot(data.frame(residuals = tsdiff1forecasts$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+# checkresiduals(tsdiff1forecasts)
 
-# Independencia
-acf(serieC)
-acf(serieC, type = "partial")
-
-acf(serieU)
-acf(serieU, type = "partial")
-
-#***************************************************************************#
-#*************** Estudando as series ***************#
-#***************************************************************************#
-plot(decompose(serieC,type = "additive",filter = NULL))
-plot(decompose(serieU,type = "additive",filter = NULL))
-
-#***************************************************************************#
-#*************** Estacionaridade ***************#
-#***************************************************************************#
-aTSA::adf.test(serieC) # aceitamos a estacionaridade
-aTSA::adf.test(serieU) # aceitamos a estacionaridade
-
-#***************************************************************************#
-#*************** Escolha so modelo ARIMA ***************#
-#***************************************************************************#
-ARIMAC <- auto.arima(serieC)
-ARIMAU <- auto.arima(serieU)
-
-# Residuo padronizado
-respadronC <- ARIMAC$residuals/ARIMAC$sigma2
-respadronU <- ARIMAU$residuals/ARIMAU$sigma2
-
-# Normalidade
-library(nortest)
-lillie.test(respadronC)
-shapiro.test(respadronC)
-qqnorm(respadronC); qqline(respadronC, col=2)
-
-lillie.test(respadronU)
-shapiro.test(respadronU)
-qqnorm(respadronU); qqline(respadronU, col=2)
-
-# Independencia dos residuos
-acf(respadronC)
-acf(respadronC, type = "partial")
-
-acf(respadronU)
-acf(respadronU, type = "partial")
 
 # Previsão
 plot(forecast::forecast(ARIMAC, h=50, level = c(90,95,99)),shadecols = c("gray70", "gray50", "gray30"), fcol = "red", flwd = 0.9)
 plot(forecast::forecast(ARIMAU, h=50, level = c(90,95,99)),shadecols = c("gray70", "gray50", "gray30"), fcol = "red", flwd = 0.9)
+
+# Create and plot Time Series - High
+xts = xts(MCD_2006$Close, order.by=MCD_2006$Date)
+attr(xts, 'frequency') <- length(xts)/12
+ts = as.ts(xts, start = c(2006))
+
+# Estacionario?
+adf.test(xts)
+
+dygraph(xts, xlab = "Time", ylab = "High valor", main = "Séries Temporais") %>%
+  # dySeries(labels.default()) %>%
+  # dyOptions(colors = c("red")) %>%
+  dyRangeSelector()
+
+## Decomposing Time Series
+tscomponents_add <- decompose(ts, type = "additive")
+tscomponents_mul <- decompose(ts, type = "multiplicative")
+plot(tscomponents_add, col = "red")
+plot(tscomponents_mul, col = "blue")
+
+xtsdiff1 <- diff(xts, differences=1)
+tsdiff1 <- diff(ts, differences=1)
+plot.xts(xtsdiff1, col = "blue")
+tseries::adf.test(tsdiff1, alternative = "stationary", k = 0)
+findfrequency(xts)          # find dominant frequency of original time series
+findfrequency(xtsdiff1)     # find dominant frequency of differenced time series
+
+
+## Selecting a Candidate ARIMA Model
+
+Acf(xtsdiff1, lag.max=60)             # plot a correlogram
+Acf(xtsdiff1, lag.max=60, plot=FALSE) # get the autocorrelation values
+
+Pacf(xtsdiff1, lag.max=60)             # plot a partial correlogram
+Pacf(xtsdiff1, lag.max=60, plot=FALSE) # get the partial autocorrelation values
+
+tsarima240 <- auto.arima(head(xts, -240), max.p = 3, max.q = 3, max.d = 3) # excluding last 240 time series as test data
+print(tsarima240)
+autoplot(tsarima240)
+tsarima120 <- auto.arima(head(xts, -120), max.p = 3, max.q = 3, max.d = 3) #120
+print(tsarima120)
+autoplot(tsarima120)
+tsarima60 <- auto.arima(head(xts, -60), max.p = 3, max.q = 3, max.d = 3) #60
+print(tsarima60)
+autoplot(tsarima60)
+tsarima30 <- auto.arima(head(xts, -30), max.p = 3, max.q = 3, max.d = 3) #30
+print(tsarima30)
+autoplot(tsarima30)
+tsarima7 <- auto.arima(head(xts, -7), max.p = 3, max.q = 3, max.d = 3)   #7
+print(tsarima7)
+autoplot(tsarima7)
+
+
+tsforecasts240 <- forecast::forecast(tsarima240, h = 240) # forecast the next 240 time series
+tsforecasts120 <- forecast::forecast(tsarima120, h = 120) # forecast the next 120 time series
+tsforecasts60 <- forecast::forecast(tsarima60, h = 60) # forecast the next 60 time series
+tsforecasts30 <- forecast::forecast(tsarima30, h = 30) # forecast the next 30 time series
+tsforecasts7 <- forecast::forecast(tsarima7, h = 7) # forecast the next 7 time series
+autoplot(tsforecasts240)
+accuracy(tsforecasts240, head(tail(xts, 240), 240))
+accuracy(tsforecasts240, head(tail(xts, 240), 120))
+accuracy(tsforecasts240, head(tail(xts, 240), 60))
+accuracy(tsforecasts240, head(tail(xts, 240), 30))
+accuracy(tsforecasts240, head(tail(xts, 240), 7))
+autoplot(tsforecasts120)
+accuracy(tsforecasts120, head(tail(xts, 120), 120))
+accuracy(tsforecasts120, head(tail(xts, 120), 60))
+accuracy(tsforecasts120, head(tail(xts, 120), 30))
+accuracy(tsforecasts120, head(tail(xts, 120), 7))
+autoplot(tsforecasts60)
+accuracy(tsforecasts60, head(tail(xts, 60), 60))
+accuracy(tsforecasts60, head(tail(xts, 60), 30))
+accuracy(tsforecasts60, head(tail(xts, 60), 7))
+autoplot(tsforecasts30)
+accuracy(tsforecasts30, head(tail(xts, 30), 30))
+accuracy(tsforecasts30, head(tail(xts, 30), 7))
+autoplot(tsforecasts7)
+accuracy(tsforecasts7, head(tail(xts, 7), 7))
+
+# plot.ts(tsforecasts$residuals)            # make time plot of forecast errors
+print('tsforecasts240')
+ggplot(data.frame(residuals = tsforecasts240$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts240)
+print('tsforecasts120')
+ggplot(data.frame(residuals = tsforecasts120$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts120)
+print('tsforecasts60')
+ggplot(data.frame(residuals = tsforecasts60$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts60)
+print('tsforecasts30')
+ggplot(data.frame(residuals = tsforecasts30$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts30)
+print('tsforecasts7')
+ggplot(data.frame(residuals = tsforecasts7$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts7)
+# 
+# ggplot(data.frame(residuals = tsdiff1forecasts$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+# checkresiduals(tsdiff1forecasts)
+
+
+# Previsão
+plot(forecast::forecast(ARIMAC, h=50, level = c(90,95,99)),shadecols = c("gray70", "gray50", "gray30"), fcol = "red", flwd = 0.9)
+plot(forecast::forecast(ARIMAU, h=50, level = c(90,95,99)),shadecols = c("gray70", "gray50", "gray30"), fcol = "red", flwd = 0.9)
+
+
+# Create and plot Time Series - Low
+xts = xts(MCD_2006$Low, order.by=MCD_2006$Date)
+attr(xts, 'frequency') <- length(xts)/12
+ts = as.ts(xts, start = c(2006))
+
+# Estacionario?
+adf.test(xts)
+
+dygraph(xts, xlab = "Time", ylab = "High valor", main = "Séries Temporais") %>%
+  # dySeries(labels.default()) %>%
+  # dyOptions(colors = c("red")) %>%
+  dyRangeSelector()
+
+## Decomposing Time Series
+tscomponents_add <- decompose(ts, type = "additive")
+tscomponents_mul <- decompose(ts, type = "multiplicative")
+plot(tscomponents_add, col = "red")
+plot(tscomponents_mul, col = "blue")
+
+xtsdiff1 <- diff(xts, differences=1)
+tsdiff1 <- diff(ts, differences=1)
+plot.xts(xtsdiff1, col = "blue")
+tseries::adf.test(tsdiff1, alternative = "stationary", k = 0)
+findfrequency(xts)          # find dominant frequency of original time series
+findfrequency(xtsdiff1)     # find dominant frequency of differenced time series
+
+
+## Selecting a Candidate ARIMA Model
+
+Acf(xtsdiff1, lag.max=60)             # plot a correlogram
+Acf(xtsdiff1, lag.max=60, plot=FALSE) # get the autocorrelation values
+
+Pacf(xtsdiff1, lag.max=60)             # plot a partial correlogram
+Pacf(xtsdiff1, lag.max=60, plot=FALSE) # get the partial autocorrelation values
+
+tsarima240 <- auto.arima(head(xts, -240), max.p = 3, max.q = 3, max.d = 3) # excluding last 240 time series as test data
+print(tsarima240)
+autoplot(tsarima240)
+tsarima120 <- auto.arima(head(xts, -120), max.p = 3, max.q = 3, max.d = 3) #120
+print(tsarima120)
+autoplot(tsarima120)
+tsarima60 <- auto.arima(head(xts, -60), max.p = 3, max.q = 3, max.d = 3) #60
+print(tsarima60)
+autoplot(tsarima60)
+tsarima30 <- auto.arima(head(xts, -30), max.p = 3, max.q = 3, max.d = 3) #30
+print(tsarima30)
+autoplot(tsarima30)
+tsarima7 <- auto.arima(head(xts, -7), max.p = 3, max.q = 3, max.d = 3)   #7
+print(tsarima7)
+autoplot(tsarima7)
+
+
+tsforecasts240 <- forecast::forecast(tsarima240, h = 240) # forecast the next 240 time series
+tsforecasts120 <- forecast::forecast(tsarima120, h = 120) # forecast the next 120 time series
+tsforecasts60 <- forecast::forecast(tsarima60, h = 60) # forecast the next 60 time series
+tsforecasts30 <- forecast::forecast(tsarima30, h = 30) # forecast the next 30 time series
+tsforecasts7 <- forecast::forecast(tsarima7, h = 7) # forecast the next 7 time series
+autoplot(tsforecasts240)
+accuracy(tsforecasts240, head(tail(xts, 240), 240))
+accuracy(tsforecasts240, head(tail(xts, 240), 120))
+accuracy(tsforecasts240, head(tail(xts, 240), 60))
+accuracy(tsforecasts240, head(tail(xts, 240), 30))
+accuracy(tsforecasts240, head(tail(xts, 240), 7))
+autoplot(tsforecasts120)
+accuracy(tsforecasts120, head(tail(xts, 120), 120))
+accuracy(tsforecasts120, head(tail(xts, 120), 60))
+accuracy(tsforecasts120, head(tail(xts, 120), 30))
+accuracy(tsforecasts120, head(tail(xts, 120), 7))
+autoplot(tsforecasts60)
+accuracy(tsforecasts60, head(tail(xts, 60), 60))
+accuracy(tsforecasts60, head(tail(xts, 60), 30))
+accuracy(tsforecasts60, head(tail(xts, 60), 7))
+autoplot(tsforecasts30)
+accuracy(tsforecasts30, head(tail(xts, 30), 30))
+accuracy(tsforecasts30, head(tail(xts, 30), 7))
+autoplot(tsforecasts7)
+accuracy(tsforecasts7, head(tail(xts, 7), 7))
+
+# plot.ts(tsforecasts$residuals)            # make time plot of forecast errors
+print('tsforecasts240')
+ggplot(data.frame(residuals = tsforecasts240$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts240)
+print('tsforecasts120')
+ggplot(data.frame(residuals = tsforecasts120$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts120)
+print('tsforecasts60')
+ggplot(data.frame(residuals = tsforecasts60$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts60)
+print('tsforecasts30')
+ggplot(data.frame(residuals = tsforecasts30$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts30)
+print('tsforecasts7')
+ggplot(data.frame(residuals = tsforecasts7$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts7)
+# 
+# ggplot(data.frame(residuals = tsdiff1forecasts$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+# checkresiduals(tsdiff1forecasts)
+
+
+# Previsão
+plot(forecast::forecast(ARIMAC, h=50, level = c(90,95,99)),shadecols = c("gray70", "gray50", "gray30"), fcol = "red", flwd = 0.9)
+plot(forecast::forecast(ARIMAU, h=50, level = c(90,95,99)),shadecols = c("gray70", "gray50", "gray30"), fcol = "red", flwd = 0.9)
+
+# Create and plot Time Series - Close
+xts = xts(MCD_2006$Close, order.by=MCD_2006$Date)
+attr(xts, 'frequency') <- length(xts)/12
+ts = as.ts(xts, start = c(2006))
+
+# Estacionario?
+adf.test(xts)
+
+dygraph(xts, xlab = "Time", ylab = "High valor", main = "Séries Temporais") %>%
+  # dySeries(labels.default()) %>%
+  # dyOptions(colors = c("red")) %>%
+  dyRangeSelector()
+
+## Decomposing Time Series
+tscomponents_add <- decompose(ts, type = "additive")
+tscomponents_mul <- decompose(ts, type = "multiplicative")
+plot(tscomponents_add, col = "red")
+plot(tscomponents_mul, col = "blue")
+
+xtsdiff1 <- diff(xts, differences=1)
+tsdiff1 <- diff(ts, differences=1)
+plot.xts(xtsdiff1, col = "blue")
+tseries::adf.test(tsdiff1, alternative = "stationary", k = 0)
+findfrequency(xts)          # find dominant frequency of original time series
+findfrequency(xtsdiff1)     # find dominant frequency of differenced time series
+
+
+## Selecting a Candidate ARIMA Model
+
+Acf(xtsdiff1, lag.max=60)             # plot a correlogram
+Acf(xtsdiff1, lag.max=60, plot=FALSE) # get the autocorrelation values
+
+Pacf(xtsdiff1, lag.max=60)             # plot a partial correlogram
+Pacf(xtsdiff1, lag.max=60, plot=FALSE) # get the partial autocorrelation values
+
+tsarima240 <- auto.arima(head(xts, -240), max.p = 3, max.q = 3, max.d = 3) # excluding last 240 time series as test data
+print(tsarima240)
+autoplot(tsarima240)
+tsarima120 <- auto.arima(head(xts, -120), max.p = 3, max.q = 3, max.d = 3) #120
+print(tsarima120)
+autoplot(tsarima120)
+tsarima60 <- auto.arima(head(xts, -60), max.p = 3, max.q = 3, max.d = 3) #60
+print(tsarima60)
+autoplot(tsarima60)
+tsarima30 <- auto.arima(head(xts, -30), max.p = 3, max.q = 3, max.d = 3) #30
+print(tsarima30)
+autoplot(tsarima30)
+tsarima7 <- auto.arima(head(xts, -7), max.p = 3, max.q = 3, max.d = 3)   #7
+print(tsarima7)
+autoplot(tsarima7)
+
+
+tsforecasts240 <- forecast::forecast(tsarima240, h = 240) # forecast the next 240 time series
+tsforecasts120 <- forecast::forecast(tsarima120, h = 120) # forecast the next 120 time series
+tsforecasts60 <- forecast::forecast(tsarima60, h = 60) # forecast the next 60 time series
+tsforecasts30 <- forecast::forecast(tsarima30, h = 30) # forecast the next 30 time series
+tsforecasts7 <- forecast::forecast(tsarima7, h = 7) # forecast the next 7 time series
+autoplot(tsforecasts240)
+accuracy(tsforecasts240, head(tail(xts, 240), 240))
+accuracy(tsforecasts240, head(tail(xts, 240), 120))
+accuracy(tsforecasts240, head(tail(xts, 240), 60))
+accuracy(tsforecasts240, head(tail(xts, 240), 30))
+accuracy(tsforecasts240, head(tail(xts, 240), 7))
+autoplot(tsforecasts120)
+accuracy(tsforecasts120, head(tail(xts, 120), 120))
+accuracy(tsforecasts120, head(tail(xts, 120), 60))
+accuracy(tsforecasts120, head(tail(xts, 120), 30))
+accuracy(tsforecasts120, head(tail(xts, 120), 7))
+autoplot(tsforecasts60)
+accuracy(tsforecasts60, head(tail(xts, 60), 60))
+accuracy(tsforecasts60, head(tail(xts, 60), 30))
+accuracy(tsforecasts60, head(tail(xts, 60), 7))
+autoplot(tsforecasts30)
+accuracy(tsforecasts30, head(tail(xts, 30), 30))
+accuracy(tsforecasts30, head(tail(xts, 30), 7))
+autoplot(tsforecasts7)
+accuracy(tsforecasts7, head(tail(xts, 7), 7))
+
+# plot.ts(tsforecasts$residuals)            # make time plot of forecast errors
+print('tsforecasts240')
+ggplot(data.frame(residuals = tsforecasts240$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts240)
+print('tsforecasts120')
+ggplot(data.frame(residuals = tsforecasts120$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts120)
+print('tsforecasts60')
+ggplot(data.frame(residuals = tsforecasts60$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts60)
+print('tsforecasts30')
+ggplot(data.frame(residuals = tsforecasts30$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts30)
+print('tsforecasts7')
+ggplot(data.frame(residuals = tsforecasts7$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+checkresiduals(tsforecasts7)
+# 
+# ggplot(data.frame(residuals = tsdiff1forecasts$residuals), aes(residuals)) + geom_histogram(bins = 50, aes(y = ..density..), col = "red", fill = "red", alpha = 0.3) + geom_density()# make a histogram
+# checkresiduals(tsdiff1forecasts)
+
+
+# Previsão
+plot(forecast::forecast(ARIMAC, h=50, level = c(90,95,99)),shadecols = c("gray70", "gray50", "gray30"), fcol = "red", flwd = 0.9)
+plot(forecast::forecast(ARIMAU, h=50, level = c(90,95,99)),shadecols = c("gray70", "gray50", "gray30"), fcol = "red", flwd = 0.9)
+
