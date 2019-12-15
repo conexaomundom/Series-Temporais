@@ -68,20 +68,107 @@ plot(forecast(icmsba_d.ts, h=12, level = c(95,99)),shadecols = c( "#9ECAE1", "#6
 #Por conta da sazionalidade podemos prever por bastante tempo.  
 
 
+####
+# Primeira forma de retirar a tendência tomando uma diferença
+####
+dif_icmsba_d.ts <- diff(icmsba_d.ts)
+plot(dif_icmsba_d.ts)
+plot(decompose(dif_icmsba_d.ts))
+
+# ACF e PACF
+acf(dif_icmsba_d.ts)
+pacf(dif_icmsba_d.ts)
+
+# Pegando a tendencia para 
+dif_icmsba_d_STL.ts <- stl(dif_icmsba_d.ts, "periodic")
+plot(dif_icmsba_d.ts)
+lines(dif_icmsba_d_STL.ts$time.series[, "trend"], lwd = 1.4, col = "red")
+
+###
+# Teste de estacionaridade
+library(tseries)
+adf.test(dif_icmsba_d.ts, alternative = "stationary")
+###
+
+# Previsão 
+library(forecast)
+forecast(dif_icmsba_d.ts, h=12, level = c(95,99))
+plot(forecast(dif_icmsba_d.ts, h=12, level = c(95,99)),shadecols = c( "#9ECAE1", "#6BAED6"), fcol = "darkblue", flwd = 1)
+#Por conta da sazionalidade podemos prever por bastante tempo.  
+
+
+####
+
+# Previsão 
+library(forecast)
+forecast(icmsba_d.ts, h=12, level = c(95,99))
+plot(forecast(icmsba_d.ts, h=12, level = c(95,99)),shadecols = c( "#9ECAE1", "#6BAED6"), fcol = "darkblue", flwd = 1)
+#Por conta da sazionalidade podemos prever por bastante tempo.  
+
+
 
 ####
 # Segunda forma de retirar a tendência taxa de crescimento, log
 ####
+log_icmsba_d.ts <- log(icmsba_d.ts)
+plot(log_icmsba_d.ts)
+plot(decompose(log_icmsba_d.ts))
+
+# ACF e PACF
+acf(log_icmsba_d.ts)
+pacf(log_icmsba_d.ts)
+
+# Pegando a tendencia para 
+log_icmsba_d_STL.ts <- stl(log_icmsba_d.ts, "periodic")
+plot(log_icmsba_d.ts)
+lines(log_icmsba_d_STL.ts$time.series[, "trend"], lwd = 1.4, col = "red")
+
+###
+# Teste de estacionaridade
+library(tseries)
+adf.test(log_icmsba_d.ts, alternative = "stationary")
+###
+
+# Previsão 
+library(forecast)
+forecast(log_icmsba_d.ts, h=12, level = c(95,99))
+plot(forecast(log_icmsba_d.ts, h=12, level = c(95,99)),shadecols = c( "#9ECAE1", "#6BAED6"), fcol = "darkblue", flwd = 1)
+#Por conta da sazionalidade podemos prever por bastante tempo.  
+
+
+####
+
+# Previsão 
+library(forecast)
+forecast(icmsba_d.ts, h=12, level = c(95,99))
+plot(forecast(icmsba_d.ts, h=12, level = c(95,99)),shadecols = c( "#9ECAE1", "#6BAED6"), fcol = "darkblue", flwd = 1)
+#Por conta da sazionalidade podemos prever por bastante tempo.  
+
 
 ####
 # Terceira forma de serie removendo a tendencia
-
-icmsba_d_STL.ts$time.series[,"trend"]
-
 icms.sem.tend <- icmsba_d.ts - icmsba_d_STL.ts$time.series[, "trend"]
 plot(icms.sem.tend)
-adf.test(icms.sem.tend)
 
+plot(decompose(icms.sem.tend))
+
+# ACF e PACF
+acf(icms.sem.tend)
+pacf(icms.sem.tend)
+
+# Pegando a tendencia para 
+icms.sem.tend_STL.ts <- stl(icms.sem.tend, "periodic")
+plot(icms.sem.tend)
+lines(icms.sem.tend_STL.ts$time.series[, "trend"], lwd = 1.4, col = "red")
+
+###
+# Teste de estacionaridade
+library(tseries)
+adf.test(icms.sem.tend, alternative = "stationary")
+###
+
+# Previsão 
 library(forecast)
 forecast(icms.sem.tend, h=12, level = c(95,99))
 plot(forecast(icms.sem.tend, h=12, level = c(95,99)),shadecols = c( "#9ECAE1", "#6BAED6"), fcol = "darkblue", flwd = 1)
+#Por conta da sazionalidade podemos prever por bastante tempo.  
