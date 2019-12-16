@@ -74,11 +74,11 @@ depois2000 <- ts(captacao_dts[b], start = c(1995,1), frequency = 252)
 # Pegando a tendencia para Plotar a série com a tendência  ----------------
 antes2000_STL.ts <- stl(antes2000, "periodic")
 plot(antes2000, main = "Série da Captação de Depósitos feitos antes de 2000 \n com a tendência")
-lines(antes2000_STL.ts$time.series[, "trend"], lwd = 1.4, col = "red")
+lines(antes2000_STL.ts$time.series[, "trend"], lwd = 1.4, col = "yellow")
 
 depois2000_STL.ts <- stl(depois2000, "periodic")
 plot(depois2000, main = "Série da Captação de Depósitos feitos depois de 2000 \n com a tendência")
-lines(depois2000_STL.ts$time.series[, "trend"], lwd = 1.4, col = "red")
+lines(depois2000_STL.ts$time.series[, "trend"], lwd = 1.4, col = "yellow")
 
 # Verificamos em vermelho a tendencia da serie temporal, precisaremos destes valore para alguns possiveis
 # ajusates para esta serie temporal, alem disso observa-se claramente a tendencia novamente, desta vez
@@ -151,8 +151,19 @@ plot(t01,shadecols = c( "green", "blue"), fcol = "darkblue", flwd = 1,
 dif_antes2000 <- diff(antes2000)
 dif_depois2000 <- diff(depois2000)
 
-plot(dif_antes2000)
-plot(dif_depois2000)
+# Pegando a tendencia para Plotar a série com a tendência  ----------------
+dif_antes2000_STL.ts <- stl(dif_antes2000, "periodic")
+plot(dif_antes2000, main = "Série da Captação de Depósitos diferenciado uma vez \n feitos antes de 2000 com a tendência")
+lines(dif_antes2000_STL.ts$time.series[, "trend"], lwd = 1.4, col = "red")
+
+dif_depois2000_STL.ts <- stl(dif_depois2000, "periodic")
+plot(dif_depois2000, main = "Série da Captação de Depósitos diferenciado uma vez \n feitos depois de 2000 com a tendência")
+lines(dif_depois2000_STL.ts$time.series[, "trend"], lwd = 1.4, col = "red")
+
+# Verificamos em vermelho a tendencia da serie temporal, precisaremos destes valore para alguns possiveis
+# ajusates para esta serie temporal, alem disso observa-se claramente a tendencia novamente, desta vez
+# ainda mais facilmente por estar sobreposta a propria serie temporal.
+
 
 plot(decompose(dif_antes2000))
 plot(decompose(dif_depois2000))
@@ -164,11 +175,12 @@ plot(decompose(dif_depois2000))
 
 
 # ACF e PACF --------------------------------------------------------------
-acf(dif_antes2000)
-acf(dif_depois2000)
+acf(dif_antes2000, main = " Função de Autocorrelação da série diferenciada \n uma vez, antes de 2000", ylab = "Autocorrelação")
+acf(dif_depois2000, main = " Função de Autocorrelação da série diferenciada \n uma vez, depois de 2000  \n ", ylab = "Autocorrelação")
 
-pacf(dif_antes2000)
-pacf(dif_depois2000)
+pacf(dif_antes2000, main = "Função de Autocorrelação Parcial da série diferenciada \n uma vez, antes de 2000", ylab = "Autocorrelação parcial")
+pacf(dif_depois2000, main = "Função de Autocorrelação Parcial da série diferenciada \n uma vez, depois de 2000  \n ", ylab = "Autocorrelação parcial")
+
 
 # Observa-se que todos os lag do ACF est?o fora do intervalo de confian?a assim indicando
 # uma possibilidade elevada de n?o ser representado por um modelo AR, alem disso o PACF
@@ -190,20 +202,6 @@ pacf(dif_depois2000)
 # MA(2) com o componente se sazionalidade, como foi aplicada uma diferencia??o na serie original que tinha como
 # um possivel modelo de melhor aplica??o um MA(2) com o componente sazional e uma diferencia??o ent?o este resultado
 # seria o esperado.
-
-
-# Pegando a tendencia para Plotar a série com a tendência  ----------------
-dif_antes2000_STL.ts <- stl(dif_antes2000, "periodic")
-plot(dif_antes2000)
-lines(dif_antes2000_STL.ts$time.series[, "trend"], lwd = 1.4, col = "red")
-
-dif_depois2000_STL.ts <- stl(dif_depois2000, "periodic")
-plot(dif_depois2000)
-lines(dif_depois2000_STL.ts$time.series[, "trend"], lwd = 1.4, col = "red")
-
-# Verificamos em vermelho a tendencia da serie temporal, precisaremos destes valore para alguns possiveis
-# ajusates para esta serie temporal, alem disso observa-se claramente a tendencia novamente, desta vez
-# ainda mais facilmente por estar sobreposta a propria serie temporal.
 
 
 # Teste de estacionaridade ------------------------------------------------
@@ -250,8 +248,6 @@ plot(t12,shadecols = c( "green", "blue"), fcol = "darkblue", flwd = 1,
 
 log_antes2000 <- log(antes2000)
 log_depois2000 <- log(depois2000)
-plot(log_antes2000)
-plot(log_depois2000)
 
 log_antes2000_STL.ts <- stl(log_antes2000, "periodic")
 plot(log_antes2000)
