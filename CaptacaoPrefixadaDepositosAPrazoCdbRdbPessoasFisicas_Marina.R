@@ -91,9 +91,19 @@ lines(depois2001_STL.ts$time.series[, "trend"], lwd = 1.4, col = "yellow")
 # oscilar, mas não muito durante o tempo, porém a inclinação
 # descrente está presente.
 
-
 plot(decompose(antes2001))
+# Para o cenário antes de 2001
+# A partir do plot do decompose é possível observar a série
+# a tendência a sazonalidade que é perceptivel identificar
+# picos mais altos e bem baixos em dezembro e janeiro dos anos
+# observados e em quarto está o erro.
+
 plot(decompose(depois2001))
+# Para o cenário depois de 2001
+# A partir do plot do decompose é possível observar a série
+# a tendência, com muita mais clareza podemos identificar a
+# tendencia completamente decrescente a sazonalidade que é 
+# perceptivel e em quarto está o erro.
 
 
 # ACF e PACF --------------------------------------------------------------
