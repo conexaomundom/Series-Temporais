@@ -78,4 +78,12 @@ autoplot(window(AirPassengers, start = 1949)) +
   ggtitle("Previsão para o número totl de passageiros") + 
   guides(colour = guide_legend(title = "PrevisãO"))
   
-  
+AirPassenger3 <- window(AirPassengers, start = 1960)
+accuracy(AirPassengersfit1, AirPassenger3)[1, c(3,2,5)]
+
+accuracy(AirPassengersfit2, AirPassenger3)[1, c(3,2,5)]
+
+accuracy(AirPassengersfit3, AirPassenger3)[1, c(3,2,5)]
+
+accuracy(AirPassengersfit4, AirPassenger3)[1, c(3,2,5)]
+# Quem ganhou foi o terceiro modelo.  
