@@ -87,3 +87,43 @@ accuracy(AirPassengersfit3, AirPassenger3)[1, c(3,2,5)]
 
 accuracy(AirPassengersfit4, AirPassenger3)[1, c(3,2,5)]
 # Quem ganhou foi o terceiro modelo.  
+
+##############################
+# Alisamento exponencial
+#############################
+
+air <- window(AirPassengers, start = 1949)
+fc <- holt(air, h = 5)
+fc$model
+
+
+fc <- holt(air, h = 15)
+autoplot(air) +
+  autolayer(fc, series = "AE, Holt", PI = FALSE)
+  guides(colou = guide_legend(title = "Forecast"))
+  
+  autoplot(fc)
+
+# Alisamento expoenncial aditivo e multiplicativo
+air <- window(AirPassengers, start = 1949)
+fit1 <- hw(AirPassenger2, seasonal = "additive", h = 12)
+fit2 <- hw(AirPassenger2, seasonal = "multiplicative", h = 12)
+  
+autoplot(air) +
+  autolayer(fit1, series = "HW - aditivo", PI = FALSE) +
+  autolayer(fit2, series = "HW - multiplicativo", PI = FALSE) +
+  guides(colou = guide_legend(title = "Forecast"))
+
+# Vamos comparar as previsões - Métodos (mena, naive, drift) e AE
+
+AirPassenger3 <- window(AirPassengers, start = 1960)
+
+
+accuracy(fit1, AirPassenger3)[1, c(3,2,5)]
+accuracy(fit2, AirPassenger3)[1, c(3,2,5)]
+accuracy(AirPassengersfit1, AirPassenger3)[1, c(3,2,5)]
+accuracy(AirPassengersfit2, AirPassenger3)[1, c(3,2,5)]
+accuracy(AirPassengersfit3, AirPassenger3)[1, c(3,2,5)]
+accuracy(AirPassengersfit4, AirPassenger3)[1, c(3,2,5)]
+
+
