@@ -21,11 +21,7 @@ autoplot(AirPassengers, col = "purple", linetype = 6)
 # Ajuste e diagnostico
 sarima(AirPassengers, 2,1,1,0,1,0,12)
 
-meanf(AirPassengers, 1)
-naive(AirPassengers, 1)
-summary(AirPassengers, 1)
-snaive(AirPassengers, 1)
-rwf(AirPassengers, 1 ,drift = TRUE)
+
 
 
 ndiffs(AirPassengers)
@@ -33,3 +29,23 @@ nsdiffs(AirPassengers)
 
 dados <- auto.arima(AirPassengers)
 plot(dados)
+
+
+d_forecasts <- forecast(dados, level = 95, h = 50)
+autoplot(d_forecasts)
+
+
+###############
+# METODOS DE PREVISAO
+#############
+# media, 1, significa um passo a frente.
+meanf(AirPassengers, 1)
+
+# naive 
+naive(AirPassengers, 1)
+summary(AirPassengers, 1)
+snaive(AirPassengers, 1)
+
+# drift
+rwf(AirPassengers, 1 ,drift = TRUE)
+
