@@ -277,6 +277,9 @@ d_sarima2
 # estejam acima da linha pontilhada, ou seja rejeita-se a hipotese de que os residuos 
 # não estejam bem ajustados
 
-
+# ajustando o modelo com uma variavel dummy para a observação 
+# colocando uma variável explicativa
+x <- 
+sarima(pigs, 2,1,0, 1,0,0,12, xreg = x)
 
 ggseasonplot(pigs)
