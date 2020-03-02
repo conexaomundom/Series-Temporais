@@ -126,4 +126,118 @@ accuracy(AirPassengersfit2, AirPassenger3)[1, c(3,2,5)]
 accuracy(AirPassengersfit3, AirPassenger3)[1, c(3,2,5)]
 accuracy(AirPassengersfit4, AirPassenger3)[1, c(3,2,5)]
 
+library(fpp)
+
+usdeaths
+autoplot(usdeaths)
+ggseasonplot(usdeaths)
+
+ggAcf(usdeaths)
+
+ndiffs(usdeaths) # A série não precisa ser diferenciada d = 0.
+nsdiffs(usdeaths) # serie precisa ser diferenciada uma vez D= 1
+# Deacordo com o resultado obtido 
+
+# criterios de seleção do modelo AIC, AICC, BIC para selecionar o melhor modelo
+# trabalhando com os erros, ou seja o modelo com menor erro será o selecionado.
+
+#  Se eu utilizar a função ndiffs e resultar que não precisa de diferenciação
+# e quando eu utilizar a função auto.arima e deu que d era diferente de 0 eu vou ter que
+# utilizar o modelo feito pela função auto.arima e o modelo gerado novamente com auto.arima em que d = 0
+# fazendo auto.arima(data, d = 0)
+# e no fim fazer analise de residuo para comparar os dois possiveis modelos acima.
+
+sarima1 <- auto.arima(usdeaths)
+sarima2 <- auto.arima(usdeaths, d = 0)
+
+sarima1
+sarima2
+
+
+ajuste1 <- sarima(usdeaths, 0,1,1,0,1,1,12)
+ajuste2 <- sarima(usdeaths, 1,0,1,0,1,1,12) 
+
+
+serieT <- window(usdeaths, start = 1973, end = c(1977,12))
+ultimos_valores <- window(usdeaths, start = 1978)
+               
+length(serieT)
+length(ultimos_valores)
+
+
+# Previsão excluindo as 12 ultimas observações
+
+usdeaths1 <- meanf(serieT, h = 12)
+usdeaths2 <- rwf(serieT, h = 12)
+usdeaths3 <- rwf(serieT, h = 12, drift = TRUE)
+usdeaths4 <- snaive(serieT, h = 12)
+
+autoplot(window(ultimos_valores)) + 
+  autolayer(usdeaths1, series = "Mean", PI = FALSE) +
+  autolayer(usdeaths2, series = "Naive", PI = FALSE) +
+  autolayer(usdeaths3, series = "Naive com drift", PI = FALSE) +
+  autolayer(usdeaths4, series = "Naive com sazonalidade", PI = FALSE) +
+  ggtitle("Previsão para o número totl de passageiros") + 
+  guides(colour = guide_legend(title = "PrevisãO"))
+
+AirPassenger3 <- window(AirPassengers, start = 1960)
+accuracy(AirPassengersfit1, AirPassenger3)[1, c(3,2,5)]
+
+accuracy(AirPassengersfit2, AirPassenger3)[1, c(3,2,5)]
+
+accuracy(AirPassengersfit3, AirPassenger3)[1, c(3,2,5)]
+
+accuracy(AirPassengersfit4, AirPassenger3)[1, c(3,2,5)]
+# Quem ganhou foi o terceiro modelo.  
+
+##############################
+# Alisamento exponencial
+#############################
+
+air <- window(AirPassengers, start = 1949)
+fc <- holt(air, h = 5)
+fc$model
+
+
+fc <- holt(air, h = 15)
+autoplot(air) +
+  autolayer(fc, series = "AE, Holt", PI = FALSE)
+guides(colou = guide_legend(title = "Forecast"))
+
+autoplot(fc)
+
+# Alisamento expoenncial aditivo e multiplicativo
+air <- window(AirPassengers, start = 1949)
+fit1 <- hw(AirPassenger2, seasonal = "additive", h = 12)
+fit2 <- hw(AirPassenger2, seasonal = "multiplicative", h = 12)
+
+autoplot(air) +
+  autolayer(fit1, series = "HW - aditivo", PI = FALSE) +
+  autolayer(fit2, series = "HW - multiplicativo", PI = FALSE) +
+  guides(colou = guide_legend(title = "Forecast"))
+
+install.packages("fma")
+install.packages("expsmooth")
+
+library(fma)
+library(expsmooth)
+
+?pigs
+autoplot(pigs, col = "red", linetype = "dashed")
+# Podemos ver que a serie não é estacionária.
+# Possivelmente há sazonalidade.
+# Pico decrescente em março de 1980.
+ndiffs(pigs)
+# Vimos que d = 1, (ndifs)
+nsdiffs(pigs)
+# vimos que D = 0
+# Dado que D = 0, podemos afirmar que a série não é sazonal
+# diz penas que a série nao precisa ser difereenciada na componente sazonal 
+
+# o fato de ndiffs retornar 1 e nsdiffs retornar 0 siginifica que a ordem do modelo
+#  será algo como sarima(p,1,q)x(P,0,Q)
+
+
+auto.arima(pigs)
+summary(pigs)
 
