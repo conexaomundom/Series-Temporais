@@ -222,6 +222,10 @@ install.packages("expsmooth")
 library(fma)
 library(expsmooth)
 
+auto.arima(pigs)
+summary(pigs)
+
+
 ?pigs
 autoplot(pigs, col = "red", linetype = "dashed")
 # Podemos ver que a serie não é estacionária.
@@ -238,6 +242,41 @@ nsdiffs(pigs)
 #  será algo como sarima(p,1,q)x(P,0,Q)
 
 
-auto.arima(pigs)
-summary(pigs)
+# pelos critérios de seleção AIC e AICC
 
+d_arima1 <- auto.arima(pigs, ic = "aic")
+d_arima2 <- auto.arima(pigs, ic = "bic")
+# Compare os dois modelos d_arima1 e d_arima2 via seleção de modelos 
+# no caso eu iria observar o s residuos, aic, bic, aicc dos dois modelos
+# e ver numa tabelinha qual modelo obteve menores resiudos.
+# tipo =
+
+arima1 <- c(d_arima1$aic, d_arima1$aicc, d_arima1$bic)
+arima2 <- c(d_arima2$aic, d_arima2$aicc, d_arima2$bic)
+matriz <- rbind(arima1, arima2)
+
+library(forecast)
+d_sarima1 <- sarima(pigs, 2,1,0, 2,0,0,12)
+d_sarima2 <- sarima(pigs, 2,1,0, 1,0,0,12)
+d_sarima1
+# d_sarima1 ao nível de significancia de 5%, temos que todos os parametros são
+# são siginificativos (atenção para D (Fi grande)m (autoregressivo na parte sazonal))
+
+d_sarima2
+# d_sarima2 independente do nível nominal, temos que todos os parametros são
+# são siginificativos. nunca colocar que o p-valor é 0, pois é uma probabilidade
+# no caso poderiamos colocar 
+
+
+# residuos esperado que esteja entre 3 e -3, 
+# que todos os lags esteja dentro do intervalo de confiança dizendo que os resiudos são
+# sao nao correlacionados
+
+# os residuos seguem normalidade
+# e no terceiro graifco que da o resultado do teste de Ljung Box, que todos os pontos
+# estejam acima da linha pontilhada, ou seja rejeita-se a hipotese de que os residuos 
+# não estejam bem ajustados
+
+
+
+ggseasonplot(pigs)
