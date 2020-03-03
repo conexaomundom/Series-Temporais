@@ -69,3 +69,19 @@ nsdiffs(AirPassengers)
 # fiquei um pouco na dúvida.
 
 auto.arima(AirPassengers)
+
+# ********************* Dúvida
+# Como resultado do uso da função auto.arima diz a ordem do modelo, 
+# que resulta numa estimação dos 
+# parametros que explicam a série ARIMA(2,1,1)(0,1,0), em que foi estimado
+# p = 2 no caso na parte regressima, d = 1, ou seja, a série precisa ser 
+# diferenciada uma vez para corrigir o problema da tendência, mas já era esperado
+#  pois ao utilizar a função ndiffs anteriormente tinha resultado que a série
+# realmente necessatava de uma diferenciação e no parametro q da parte de
+# médias móveis foi estimado 1. Além disso também é estimado a parte da componente
+# sazonal em que resultou em P = 0, ou seja a parte autorregressiva da componente
+# sazonal foi 0, D = 1 como esperado também que ao utilizar a função nsdiffs
+# resultando que o numero de diferenciações para a parte sazonal ser estacionária 
+# é 1 e Q = 0 também, ou seja, não há necessidade de parametro na parte de médias 
+# móveis para a componente sazonal.
+# ********************* Dúvida
