@@ -52,5 +52,20 @@ which(AirPassengers == 622)
 # de passageiros em outras épocas ao longo do ano.
 
 ndiffs(AirPassengers)
+# Ao aplicar a função ndiffs no banco, resultará quantas vezes será necessário 
+# diferenciar a série para torna la estacionária, ou seja, retirar a tendência 
+# presente nela, que normalmente é 0, 1 ou 2, para o banco de numero de 
+# passageiros de voos internacionais resultou em apenas uma diferenciação
+# já resolve o problema de tendência.
 nsdiffs(AirPassengers)
+# Ao aplicar a função nsdiffs no banco, resultará quantas vezes será necessário 
+# diferenciar a série na componente sazonal para torna la estacionária, ou seja,
+# retirar a tendência presente da componente sazonal, que normalmente é 0, 1 ou
+# 2 também, para o banco de numero de passageiros de voos internacionais resultou
+# em apenas uma diferenciação também já resolve o problema de tendência na
+# componente sazonal.
+
+# Poderia explicar um pouco melhor sobre essa questão de componente sazonal
+# fiquei um pouco na dúvida.
+
 auto.arima(AirPassengers)
