@@ -203,6 +203,70 @@ autoplot(window(AirPassengers, start = 1949)) +
 # A mesma interpretação anterior.
 # mas não capitou a tendência crescente.
 
+# Observando os erros/ residuos
+
+#Pegando apenas o ultimo ano
+AirPassengers3 <- window(AirPassengers, start = 1960)
+
+accuracy(AirPassengersfit1, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit2, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit3, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit4, AirPassengers3)[1, c(3,2,5)]
+
+# O terceiro modelo teve os menores valores nas três medidas
+# de erro, como esperado que foi visto no gráfico que o método
+# do naive sazonal tinha tido a melhor desempenho, o ajuste com 
+# pior desempenho foi o da média. 
+
+##############################
+# Alisamento exponencial
+#############################
+
+air <- window(AirPassengers, start = 1949)
+fc <- holt(air, h = 5)
+fc$model
+
+fc <- holt(air, h = 12)
+autoplot(air) +
+  autolayer(fc, series = "AE, Holt", PI = FALSE)
+  guides(colour = guide_legend(title = "Forecast"))
+
+# Péssimo desempenho.
+
+# Alisamento exponencial, aditivo e multiplicativo
+air
+fit1 <- hw(AirPassengers_I12, seasonal = "additive", h = 12)
+fit2 <- hw(AirPassengers_I12, seasonal = "multiplicative", h = 12)
+
+autoplot(air) + 
+  autolayer(fit1, series = "HW - Aditivo", PI = FALSE) + 
+  autolayer(fit2, series = "HW - Multiplicativo", PI = FALSE) + 
+  ggtitle("N Total de passageiros de companhias aéres interenacionais") + 
+  guides(colour = guide_legend("Forecast"))
+
+# Aparentemente a previsão a 12 passos usando o algoritmo de Holt Winter
+# foi o melhor, mas vamos fazer uma comparação mais assidua utilizando as 
+# mesmas medidas de erros rmse, mae e mape, para averiguar qual
+# método ou algoritmo de previsão foi melhor.
+
+accuracy(AirPassengersfit1, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit2, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit3, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit4, AirPassengers3)[1, c(3,2,5)]
+
+accuracy(fit1, AirPassengers3)[1, c(3,2,5)]
+accuracy(fit2, AirPassengers3)[1, c(3,2,5)]
+
+# Bom, já podemos observar que os dois algoritmos de previsão
+# alisamento exponencial de Holt Winter tanto o aditivo quanto o 
+# multiplicativo tiveram melhos desempenho que todos os métodos naive
+# mas o multiplicativo ainda se destacou mais sendo o melhor metodo de 
+# previsão a 12 passos para o numero de passageiros internacionais da linha
+# aerea tendo MAE = 7.533284,     RMSE   9.949946,    MAPE 2.997750,
+
+
+
+
 ######################################################
 # Ajuste e diagnostico
 ######################################################
