@@ -154,18 +154,19 @@ autoplot(d_forecasts)
 
 
 # Métodos de previsão ingenuos.
+
+# Apenas observando:
 # método de média para previsão.
 meanf(AirPassengers, h = 12)
 # naive
 naive(AirPassengers, h = 12)
 snaive(AirPassengers, h = 12)
-rwf(AirPassengers, h = 12)
-# naive com drift
 rwf(AirPassengers, h = 12, drift = TRUE)
+
 
 # Plotando as previsões sem retirar as observações
 
-AirPassengers_I <- window(AirPassengers, start = 1949, end = 1960)
+AirPassengers_I <- window(AirPassengers, start = 1949, end = c(1960, 12))
 autoplot(AirPassengers_I) +
   autolayer(meanf(AirPassengers_I, h = 12), series = "Média", PI = FALSE) +
   autolayer(naive(AirPassengers_I, h = 12), series = "Naive", PI = FALSE) +
@@ -175,8 +176,32 @@ autoplot(AirPassengers_I) +
   guides(colour = guide_legend("Forecast"))
 
 # Observando o grafico, a previsão pela média, e o naive, são constntes, demonstrando
-# claramente uma previsão bem distante do comportamento natural da série
+# claramente uma previsão bem distante do comportamento natural da série, e mesmo 
+# o método naive com drift não sendo uma constante podendo notar um certo crescimento
+# ainda sim teve um comportamento bem distante da série, o melhor método ingênuo foi o 
+# naive sazonal, que conseguiu captar o comportamento da série com as caracteristicas
+# fortes sazonais. 
 
+# Plotando as previsões retirando as ultimas 12 observações
+AirPassengers_I12 <- window(AirPassengers, start = 1949, end = c(1959, 12))
+
+AirPassengersfit1 <- meanf(AirPassengers_I12, h = 12)
+# naive
+AirPassengersfit2 <- naive(AirPassengers_I12, h = 12)
+AirPassengersfit3 <- snaive(AirPassengers_I12, h = 12)
+AirPassengersfit4 <- rwf(AirPassengers_I12, h = 12, drift = TRUE)
+
+
+autoplot(window(AirPassengers, start = 1949)) +
+  autolayer(AirPassengersfit1, series = "Média", PI = FALSE) +
+  autolayer(AirPassengersfit2, series = "Naive", PI = FALSE) +
+  autolayer(AirPassengersfit3, series = "Naive Sazonal", PI = FALSE) +
+  autolayer(AirPassengersfit4, series = "Naive com drift", PI = FALSE) +
+  ggtitle("N Total de passageiros de companhias aéres interenacionais") + 
+  guides(colour = guide_legend("Forecast"))
+
+# A mesma interpretação anterior.
+# mas não capitou a tendência crescente.
 
 ######################################################
 # Ajuste e diagnostico
