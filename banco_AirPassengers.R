@@ -154,9 +154,28 @@ autoplot(d_forecasts)
 
 
 # Métodos de previsão ingenuos.
+# método de média para previsão.
+meanf(AirPassengers, h = 12)
+# naive
+naive(AirPassengers, h = 12)
+snaive(AirPassengers, h = 12)
+rwf(AirPassengers, h = 12)
+# naive com drift
+rwf(AirPassengers, h = 12, drift = TRUE)
 
+# Plotando as previsões sem retirar as observações
 
+AirPassengers_I <- window(AirPassengers, start = 1949, end = 1960)
+autoplot(AirPassengers_I) +
+  autolayer(meanf(AirPassengers_I, h = 12), series = "Média", PI = FALSE) +
+  autolayer(naive(AirPassengers_I, h = 12), series = "Naive", PI = FALSE) +
+  autolayer(snaive(AirPassengers_I, h = 12), series = "Naive Sazonal", PI = FALSE) +
+  autolayer(rwf(AirPassengers_I, h = 12, drift = TRUE), series = "Naive com drift", PI = FALSE) +
+  ggtitle("N Total de passageiros de companhias aéres interenacionais") + 
+  guides(colour = guide_legend("Forecast"))
 
+# Observando o grafico, a previsão pela média, e o naive, são constntes, demonstrando
+# claramente uma previsão bem distante do comportamento natural da série
 
 
 ######################################################
