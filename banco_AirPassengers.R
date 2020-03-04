@@ -18,7 +18,7 @@ library(astsa)
 # da linha aérea Box & Jenkins.
 AirPassengers
 
-autoplot(AirPassengers)
+autoplot(AirPassengers, col = "red")
 # Ao realizar um plot da série é possivel ver uma tendencia 
 # crescente em todos os anos de estudo, e também uma sazonalidade
 # bem presente, pois, anualmente o comportamento é o mesmo, 
@@ -68,16 +68,15 @@ nsdiffs(AirPassengers)
 # Poderia explicar um pouco melhor sobre essa questão de componente sazonal
 # fiquei um pouco na dúvida.
 
-auto.arima(AirPassengers)
-
+ajuste1 <- auto.arima(AirPassengers, ic = "aicc")
 # ********************* Dúvida
 # Como resultado do uso da função auto.arima diz a ordem do modelo, 
-# que resulta numa estimação dos 
+# utilizando o critério de seleção aicc, resultando numa estimação dos 
 # parametros que explicam a série ARIMA(2,1,1)(0,1,0), em que foi estimado
 # p = 2 no caso na parte regressima, d = 1, ou seja, a série precisa ser 
 # diferenciada uma vez para corrigir o problema da tendência, mas já era esperado
 #  pois ao utilizar a função ndiffs anteriormente tinha resultado que a série
-# realmente necessatava de uma diferenciação e no parametro q da parte de
+# realmente necessitava de uma diferenciação e no parametro q da parte de
 # médias móveis foi estimado 1. Além disso também é estimado a parte da componente
 # sazonal em que resultou em P = 0, ou seja a parte autorregressiva da componente
 # sazonal foi 0, D = 1 como esperado também que ao utilizar a função nsdiffs
@@ -85,3 +84,82 @@ auto.arima(AirPassengers)
 # é 1 e Q = 0 também, ou seja, não há necessidade de parametro na parte de médias 
 # móveis para a componente sazonal.
 # ********************* Dúvida
+
+ajuste2 <- auto.arima(AirPassengers, ic = "aic")
+# Já utilizando o critério de seleção aic, resultando numa estimação dos 
+# parametros bem diferente do ajuste utilizando o critério de seleção aicc
+# a estimativa foi ARIMA(0,1,1)(2,1,0) em que foi estimado p = 0 no caso 
+# na parte regressima, d = 1, ou seja, o já era esperado anteriormente tinha 
+# resultado que a série e no parametro q da parte de médias móveis foi estimado 
+# 1 também. Na parte da componente sazonal em que resultou em P = 2, ou seja a 
+# parte autorregressiva da componente sazonal foi 2, D = 1 como esperado também 
+# o numero de diferenciações para a parte sazonal ser estacionária é 1 e Q = 0 
+# também, ou seja, não há necessidade de parametro na parte de médias móveis
+# para a componente sazonal.
+
+ajuste3 <- auto.arima(AirPassengers, ic = "bic")
+# Já utilizando outro critério de seleção o bic, resultando numa estimação dos 
+# parametros bem diferente dos dois ajustes feitos anteriormente
+# que explicam a série ARIMA(1,1,0)(0,1,0) em que foi estimado p = 1 no caso 
+# na parte regressima, d = 1, ou seja, o já era esperado anteriormente tinha 
+# resultado que a série e no parametro q da parte de médias móveis foi estimado 
+# 0 dirente dos dois ajustes anteriores. Na parte da componente sazonal em que
+# resultou em P = 2, ou seja a parte autorregressiva da componente sazonal foi 2,
+# D = 1 como esperado também o numero de diferenciações para a parte sazonal ser 
+# estacionária é 1 e Q = 0 também, ou seja, não há necessidade de parametro na 
+# parte de médias móveis para a componente sazonal.
+
+
+# Observando os critérios de seleção AICC
+ajuste1$aicc
+ajuste2$aicc
+ajuste3$aicc
+# O menor aicc foi do primeiro ajuste em seguida o segundo e em seguida o terceiro.
+
+# Observando os critérios de seleção AIC
+ajuste1$aic
+ajuste2$aic
+ajuste3$aic
+# O menor aic teve o mesmo desempenho de primeiro ajuste em seguida o segundo 
+# e em seguida o terceiro.
+
+# Observando os critérios de seleção BIC
+ajuste1$bic
+ajuste2$bic
+ajuste3$bic
+# Já utilizando outro critério de seleção BIC, o ajuste1 continuou a ser melhor
+# modelo o com o menor BIC, já nesse critério o ajuste3 teve um desempenho melhor
+# que o do segundo ajuste. 
+
+# Concluindo que pelos critérios de seleção de ajuste o primeiro ajuste é o melhor
+# ajuste, agora vamos ver pelos resíduos das previsões para ver qual dos três modelos
+# é o melhor.
+
+# ********************* Dúvida
+# Posso chamar de modelo ??? creio eu que sim, já que eu...
+# ********************* Dúvida
+
+arima_dados <- arima(AirPassengers)
+# ********************* Dúvida não sei para o que serve.
+# autoplot(arima_dados)
+# ********************* Dúvida
+d_forecasts <- forecast(arima_dados, level = 95, h = 25)
+autoplot(d_forecasts)
+# ********************* Dúvida
+
+######################################################
+# METODOS DE PREVISAO
+######################################################
+
+
+
+# Métodos de previsão ingenuos.
+
+
+
+
+
+######################################################
+# Ajuste e diagnostico
+######################################################
+sarima(AirPassengers, 2,1,1, 0,1,0, 12)
