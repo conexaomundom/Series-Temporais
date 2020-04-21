@@ -62,7 +62,6 @@ arima_bic <- auto.arima(pigs, ic = "bic")
 arima_aic_c$aic
 arima_bic$aic
 
-
 arima_aic_c$aicc
 arima_bic$aicc
 

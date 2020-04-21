@@ -132,12 +132,8 @@ ajuste3$bic
 # que o do segundo ajuste. 
 
 # Concluindo que pelos critérios de seleção de ajuste o primeiro ajuste é o melhor
-# ajuste, agora vamos ver pelos resíduos das previsões para ver qual dos três modelos
+# ajuste, agora vamos ver pelos erros das previsões para ver qual dos três modelos
 # é o melhor.
-
-# ********************* Dúvida
-# Posso chamar de modelo ??? creio eu que sim, já que eu...
-# ********************* Dúvida
 
 arima_dados <- arima(AirPassengers)
 # ********************* Dúvida não sei para o que serve.
@@ -146,6 +142,19 @@ arima_dados <- arima(AirPassengers)
 d_forecasts <- forecast(arima_dados, level = 95, h = 25)
 autoplot(d_forecasts)
 # ********************* Dúvida
+
+library(forecast)
+sarima1 <- sarima(AirPassengers, 2,1,1, 0,1,0, 12)
+sarima2 <- sarima(AirPassengers, 0,1,1, 2,1,0, 12)
+sarima3 <- sarima(AirPassengers, 1,1,0, 0,1,0, 12)
+
+sarima1
+sarima2
+sarima3
+
+# Olhar os p-valores.
+
+# Outros comentários.
 
 ######################################################
 # METODOS DE PREVISAO
@@ -267,7 +276,199 @@ accuracy(fit2, AirPassengers3)[1, c(3,2,5)]
 
 
 
+
+
+##########################################################################
+# Plotando as previsões retirando as ultimas 6 observações
+##########################################################################
+
+AirPassengers_I12 <- window(AirPassengers, start = 1949, end = c(1960, 6))
+
+AirPassengersfit1 <- meanf(AirPassengers_I12, h = 6)
+# naive
+AirPassengersfit2 <- naive(AirPassengers_I12, h = 6)
+AirPassengersfit3 <- snaive(AirPassengers_I12, h = 6)
+AirPassengersfit4 <- rwf(AirPassengers_I12, h = 6, drift = TRUE)
+
+
+autoplot(window(AirPassengers, start = 1949)) +
+  autolayer(AirPassengersfit1, series = "Média", PI = FALSE) +
+  autolayer(AirPassengersfit2, series = "Naive", PI = FALSE) +
+  autolayer(AirPassengersfit3, series = "Naive Sazonal", PI = FALSE) +
+  autolayer(AirPassengersfit4, series = "Naive com drift", PI = FALSE) +
+  ggtitle("N Total de passageiros de companhias aéres interenacionais") + 
+  guides(colour = guide_legend("Forecast"))
+
+# A mesma interpretação anterior.
+# mas não capitou a tendência crescente.
+
+# Observando os erros/ residuos
+
+#Pegando apenas o ultimo ano
+AirPassengers3 <- window(AirPassengers, start = 1960)
+
+accuracy(AirPassengersfit1, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit2, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit3, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit4, AirPassengers3)[1, c(3,2,5)]
+
+# O mesmo desempenho que para h = 12.
+# O terceiro modelo teve os menores valores nas três medidas
+# de erro, como esperado que foi visto no gráfico que o método
+# do naive sazonal tinha tido a melhor desempenho, o ajuste com 
+# pior desempenho foi o da média. 
+
+##############################
+# Alisamento exponencial
+#############################
+
+air <- window(AirPassengers, start = 1949)
+
+fc <- holt(air, h = 6)
+autoplot(air) +
+  autolayer(fc, series = "AE, Holt", PI = FALSE) + 1
+  guides(colour = guide_legend(title = "Forecast"))
+
+# Péssimo desempenho.
+
+# Alisamento exponencial, aditivo e multiplicativo
+air
+fit1 <- hw(AirPassengers_I12, seasonal = "additive", h = 6)
+fit2 <- hw(AirPassengers_I12, seasonal = "multiplicative", h = 6)
+
+autoplot(air) + 
+  autolayer(fit1, series = "HW - Aditivo", PI = FALSE) + 
+  autolayer(fit2, series = "HW - Multiplicativo", PI = FALSE) + 
+  ggtitle("N Total de passageiros de companhias aéres interenacionais") + 
+  guides(colour = guide_legend("Forecast"))
+
+# Aparentemente a previsão a 6 passos usando o algoritmo de Holt Winter
+# foi muito bom, muito bom mesmo, mas vamos fazer uma comparação mais assidua utilizando as 
+# mesmas medidas de erros rmse, mae e mape, para averiguar qual
+# método ou algoritmo de previsão foi melhor.
+
+accuracy(AirPassengersfit1, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit2, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit3, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit4, AirPassengers3)[1, c(3,2,5)]
+
+accuracy(fit1, AirPassengers3)[1, c(3,2,5)]
+accuracy(fit2, AirPassengers3)[1, c(3,2,5)]
+
+# Bom, já podemos observar que os dois algoritmos de previsão
+# alisamento exponencial de Holt Winter tanto o aditivo quanto o 
+# multiplicativo tiveram melhos desempenho que todos os métodos naive
+# mas o multiplicativo ainda se destacou mais sendo o melhor metodo de 
+# previsão a 12 passos para o numero de passageiros internacionais da linha
+# aerea tendo MAE = 7.779553,     RMSE = 10.651927,    MAPE 2.972715,
+
+
+##########################################################################
+# Plotando as previsões retirando as ultimas 3 observações
+##########################################################################
+
+AirPassengers_I12 <- window(AirPassengers, start = 1949, end = c(1960, 3))
+
+AirPassengersfit1 <- meanf(AirPassengers_I12, h = 3)
+# naive
+AirPassengersfit2 <- naive(AirPassengers_I12, h = 3)
+AirPassengersfit3 <- snaive(AirPassengers_I12, h = 3)
+AirPassengersfit4 <- rwf(AirPassengers_I12, h = 3, drift = TRUE)
+
+
+autoplot(window(AirPassengers, start = 1949)) +
+  autolayer(AirPassengersfit1, series = "Média", PI = FALSE) +
+  autolayer(AirPassengersfit2, series = "Naive", PI = FALSE) +
+  autolayer(AirPassengersfit3, series = "Naive Sazonal", PI = FALSE) +
+  autolayer(AirPassengersfit4, series = "Naive com drift", PI = FALSE) +
+  ggtitle("N Total de passageiros de companhias aéres interenacionais") + 
+  guides(colour = guide_legend("Forecast"))
+
+# A mesma interpretação anterior.
+# mas não capitou a tendência crescente.
+
+# Observando os erros/ residuos
+
+#Pegando apenas o ultimo ano
+AirPassengers3 <- window(AirPassengers, start = 1960)
+
+accuracy(AirPassengersfit1, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit2, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit3, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit4, AirPassengers3)[1, c(3,2,5)]
+
+# O mesmo desempenho que para h = 12.
+# O terceiro modelo teve os menores valores nas três medidas
+# de erro, como esperado que foi visto no gráfico que o método
+# do naive sazonal tinha tido a melhor desempenho, o ajuste com 
+# pior desempenho foi o da média. 
+
+##############################
+# Alisamento exponencial
+#############################
+
+air <- window(AirPassengers, start = 1949)
+
+fc <- holt(air, h = 6)
+autoplot(air) +
+  autolayer(fc, series = "AE, Holt", PI = FALSE) + 
+  guides(colour = guide_legend(title = "Forecast"))
+
+# Péssimo desempenho.
+
+# Alisamento exponencial, aditivo e multiplicativo
+air
+fit1 <- hw(AirPassengers_I12, seasonal = "additive", h = 6)
+fit2 <- hw(AirPassengers_I12, seasonal = "multiplicative", h = 6)
+
+autoplot(air) + 
+  autolayer(fit1, series = "HW - Aditivo", PI = FALSE) + 
+  autolayer(fit2, series = "HW - Multiplicativo", PI = FALSE) + 
+  ggtitle("N Total de passageiros de companhias aéres interenacionais") + 
+  guides(colour = guide_legend("Forecast"))
+
+# Aparentemente a previsão a 6 passos usando o algoritmo de Holt Winter
+# foi muito bom, muito bom mesmo, mas vamos fazer uma comparação mais assidua utilizando as 
+# mesmas medidas de erros rmse, mae e mape, para averiguar qual
+# método ou algoritmo de previsão foi melhor.
+
+accuracy(AirPassengersfit1, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit2, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit3, AirPassengers3)[1, c(3,2,5)]
+accuracy(AirPassengersfit4, AirPassengers3)[1, c(3,2,5)]
+
+accuracy(fit1, AirPassengers3)[1, c(3,2,5)]
+accuracy(fit2, AirPassengers3)[1, c(3,2,5)]
+
+# Bom, já podemos observar que os dois algoritmos de previsão
+# alisamento exponencial de Holt Winter tanto o aditivo quanto o 
+# multiplicativo tiveram melhos desempenho que todos os métodos naive
+# mas o multiplicativo ainda se destacou mais sendo o melhor metodo de 
+# previsão a 12 passos para o numero de passageiros internacionais da linha
+# aerea tendo MAE = 7.779553, RMSE = 10.651927, MAPE 2.972715,
+
 ######################################################
 # Ajuste e diagnostico
 ######################################################
 sarima(AirPassengers, 2,1,1, 0,1,0, 12)
+d_sarima1
+# d_sarima1 ao nível de significancia de 5%, temos que todos os parametros são
+# são siginificativos (atenção para D (Fi grande)m (autoregressivo na parte sazonal))
+
+d_sarima2
+# d_sarima2 independente do nível nominal, temos que todos os parametros são
+# são siginificativos. nunca colocar que o p-valor é 0, pois é uma probabilidade
+# no caso poderiamos colocar 
+
+
+# residuos esperado que esteja entre 3 e -3, 
+# que todos os lags esteja dentro do intervalo de confiança dizendo que os resiudos são
+# sao nao correlacionados
+
+# os residuos seguem normalidade
+# e no terceiro graifco que da o resultado do teste de Ljung Box, que todos os pontos
+# estejam acima da linha pontilhada, ou seja rejeita-se a hipotese de que os residuos 
+# não estejam bem ajustados
+
+# ajustando o modelo com uma variavel dummy para a observação 
+# colocando uma variável explicativa
